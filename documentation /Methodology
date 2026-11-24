@@ -1,0 +1,75 @@
+# Methodology
+
+## 1. Data preparation
+
+1. Loaded all files as text to avoid wrong type guessing.
+2. Profiled each table: row counts, null share, duplicate rows, spelling variants.
+3. Cleaned IDs, dates, money fields and categories (see the data dictionary).
+4. Removed duplicate rows and internal or test accounts from every table.
+5. Recovered missing signup dates from signup_completed events.
+6. Logged every issue and its fix in a data-quality report.
+
+## 2. Validation
+
+Checks run after cleaning:
+
+- User IDs are unique, and every ID in other tables exists in users.
+- End date is not before start date, and no start date is after 2026-09-30.
+- MRR is positive, and status and event names are in the approved lists.
+- The MRR bridge reconciles: opening + new + expansion - contraction - churned = closing.
+- Python, SQL, Power BI and Excel agree on sample months (Excel validation sheet).
+
+## 3. Metric definitions
+
+| Metric | Definition |
+|--------|------------|
+| Active customer | Has a subscription with start date on or before month end, and end date empty or after month end |
+| MRR | Sum of monthly price of active subscriptions at month end (annual price divided by 12) |
+| ARR | MRR x 12 |
+| ARPA | MRR / active customers |
+| New MRR | Customer had no MRR last month and has MRR this month |
+| Expansion / Contraction MRR | Existing customer's MRR rose / fell but stayed above zero |
+| Churned MRR | Customer had MRR last month and none this month |
+| Logo churn rate | Customers lost in the month / customers active at the start of the month |
+| Revenue churn rate | Churned MRR / opening MRR |
+| NRR | (Opening + expansion - contraction - churned) / opening MRR |
+| GRR | (Opening - contraction - churned) / opening MRR |
+| Activation | Created a project within 7 days of signup |
+| Cohort | Month of the customer's first paid subscription |
+| Retention at month k | Share of the cohort still active at the end of month (cohort month + k) |
+| CAC | Total channel spend / paying customers from that channel |
+| LTV (formula) | ARPA x gross margin / monthly churn rate |
+| LTV:CAC | LTV / CAC (3x or more is the usual benchmark) |
+| CAC payback | CAC / (ARPA x gross margin), in months |
+
+## 4. Analysis methods
+
+- **Funnel:** strict funnel; a user counts at a step only if every earlier step was completed.
+- **Cohorts:** retention matrix and curves by channel, plan and billing cycle.
+- **Churn:** by month, tenure bucket, plan, channel and billing cycle. Churn is split into voluntary and
+  involuntary; involuntary means the last payment attempt failed and was never recovered.
+- **Survival analysis:** Kaplan-Meier curves, which handle customers who have not churned yet.
+- **Segmentation:** RFM segments (recency, frequency, monetary) and K-Means clustering on behaviour features.
+- **Churn prediction:** monthly snapshots; features use only data up to the snapshot month; the label is
+  "not active next month". Time-based train/test split. Compared against a "no logins" baseline and
+  evaluated with PR-AUC, not accuracy.
+- **A/B testing:** a template with sample size, sample ratio mismatch check, z-test and confidence interval,
+  run on simulated data.
+- **Forecast:** damped Holt trend model, back-tested on the last 6 months against naive and linear baselines.
+
+## 5. Assumptions
+
+- Gross margin is 80%.
+- The data window ends on 2026-09-30.
+- Missing marketing spend is interpolated within each channel.
+- CAC uses total spend over the whole period divided by total paying customers per channel.
+- A customer who returns after a gap is counted as new in that month's bridge.
+- A 40% recovery rate is used only for the failed-payment savings scenario.
+
+## 6. Limitations
+
+- The data is synthetic, so behavioural signals are weaker than in real product data.
+- Every paying user activated first, so the activation comparison is 100% vs 0% by construction.
+- CAC is channel-level and not lagged; real attribution is more complex.
+- Observational data shows correlation only; the proposed A/B tests are needed for causal claims.
+- The churn model is a benchmark; its precision is modest.
