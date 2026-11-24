@@ -1,0 +1,47 @@
+# Key Insights and Recommendations
+
+## 01 Growth Overview
+
+- MRR is **$44,125** (ARR about **$530,000**) from **508** paying customers.
+- Growth is driven mostly by new customers; expansion from upgrades is small.
+- Monthly net revenue retention is below 100% (about 96%), so part of each month's new revenue only
+  replaces churned revenue.
+
+## 02 Acquisition & Conversion
+
+- **15.4%** of signups become paying customers.
+- The largest drop is the last step, trial to paid, where only about half of trial users convert.
+- Subscribtion rate of customer increase by 18.6% 
+
+## 03 Cohort Retention Analysis
+
+- Retention drops fastest in the first months of a customer's life.
+- Annual plans retain far better than monthly plans.
+- M1 Retension is 30.1% and month 3 retension is above 60%, having growth of new customers by 6.
+-  newer cohorts retain better or worse than older ones.]
+
+## 04 Churn, CAC & Customer Value
+
+- Average monthly logo churn over the last 6 months is about **4.6%**.
+- Monthly plans churn at about **6.9%** a month versus about **1.4%** for annual plans.
+- About **23%** of churned customers left after a failed payment (involuntary churn), which is recoverable.
+- LTV:CAC by channel: **Partner 5.0x** (best) and **Facebook Ads 0.63x** (worst).
+- Facebook Ads costs more to acquire a customer than that customer is worth.
+
+## Recommendations
+
+1. **Recover failed payments.** Add a dunning email sequence and card-update reminders. Recovering 40% of
+   involuntary churn would save about **[50 k] MRR** (take the figure from the Python output).
+2. **Shift budget to channels with LTV:CAC above 3x.** Reduce spend on Facebook Ads and reinvest in Partner
+   and referral channels.
+3. **Push annual plans.** Annual customers churn about five times less than monthly ones; test an annual-plan
+   prompt at checkout.
+4. **Fix early-life churn.** Add onboarding support in the first 90 days, when most churn happens.
+5. **Run the proposed experiments** (onboarding checklist, dunning emails, annual-plan prompt) to prove the
+   effect before scaling.
+
+## What I would do next
+
+- Replace the simulated A/B test with a real experiment.
+- Add a lagged CAC model and multi-touch attribution.
+- Automate the pipeline so metrics refresh weekly.
