@@ -1,0 +1,78 @@
+# Data Dictionary
+
+All raw tables are intentionally messy. The "Cleaning applied" column states what was done in Python.
+
+## users (one row per signup)
+
+| Column | Type | Description | Cleaning applied |
+|--------|------|-------------|------------------|
+| user_id | string (PK) | Unique user ID, for example U000123 | Trimmed, upper-cased, duplicates removed |
+| signup_date | datetime | When the user signed up | Mixed formats parsed; missing values recovered from the signup_completed event |
+| email | string | User email | Used only to flag test accounts |
+| country | string | Country of the user | Variants (USA, US, U.S.) standardised |
+| acquisition_channel | string | Channel that brought the user | Spelling variants mapped; blanks set to "unknown" |
+| company_size | string | Size band: 1-10, 11-50, 51-200, 201-1000 | Blanks set to "unknown" |
+| plan_at_signup | string | Plan chosen at signup (Free, Starter, Pro) | Case standardised |
+| is_internal_test | string | Flag for QA and internal accounts | Converted to boolean; flagged rows removed from all tables |
+
+## events (one row per product event)
+
+| Column | Type | Description | Cleaning applied |
+|--------|------|-------------|------------------|
+| event_id | string (PK) | Unique event ID | Duplicates removed |
+| user_id | string (FK) | User who triggered the event | Trimmed and upper-cased |
+| event_name | string | One of 10 canonical events (listed below) | About 40 spellings mapped to 10 names |
+| event_time | datetime | When the event happened | Mixed formats parsed |
+| device | string | web or mobile | iOS and Android grouped as mobile |
+
+Canonical events: landing_page_view, signup_completed, onboarding_completed, project_created, teammate_invited,
+trial_started, subscription_started, login, report_created, feature_used.
+
+## subscriptions (one row per plan period)
+
+| Column | Type | Description | Cleaning applied |
+|--------|------|-------------|------------------|
+| subscription_id | string (PK) | Unique subscription ID | Duplicates removed |
+| user_id | string (FK) | Owner | Trimmed and upper-cased |
+| plan | string | Starter, Pro or Business | Title case |
+| billing_cycle | string | monthly or annual | Lower case |
+| start_date | date | Start of this plan period | Mixed formats parsed |
+| end_date | date | End of this period; NULL means still active | "NULL", "N/A" and blanks converted to null |
+| status | string | active, churned or upgraded | cancelled, canceled and churned merged into churned |
+| mrr | decimal | Monthly recurring revenue (annual price / 12 for annual plans) | Currency text converted to numbers |
+
+An upgrade creates a new row, and the old row gets status "upgraded". An upgrade is **not** churn.
+
+## payments (one row per payment attempt)
+
+| Column | Type | Description | Cleaning applied |
+|--------|------|-------------|------------------|
+| payment_id | string (PK) | Unique payment ID | Duplicates removed |
+| user_id | string (FK) | Payer | Trimmed and upper-cased |
+| subscription_id | string (FK) | Related subscription | None |
+| payment_date | date | Date of the attempt | Mixed formats parsed |
+| amount | decimal | Amount in USD; refunds are negative | "$79.00" and "USD 79.00" converted to numbers; refunds forced negative |
+| currency | string | Always USD | All variants set to USD |
+| payment_status | string | success, failed or refunded | Variants (succeeded, paid) merged |
+| payment_method | string | card, paypal or bank_transfer | Lower case |
+
+## marketing_spend (one row per month per channel)
+
+| Column | Type | Description | Cleaning applied |
+|--------|------|-------------|------------------|
+| month | date | First day of the month | Mixed formats converted to a date |
+| channel | string | Paid or managed channel | Names mapped to the same list as users |
+| spend | decimal | Spend in USD | Text converted to numbers; missing values interpolated within channel |
+
+Organic, referral and direct channels have no spend, so they have no CAC.
+
+## Derived fields (created in Python)
+
+| Field | Definition |
+|-------|------------|
+| first_start | Date of the customer's first subscription |
+| cohort_month | Month of first_start |
+| is_churned | Last subscription ended with status churned on or before 2026-09-30 |
+| tenure_months | Months from first_start to churn date (or 2026-09-30 if active) |
+| churn_type | active, voluntary or involuntary |
+| activated_7d | Created a project within 7 days of signup |
